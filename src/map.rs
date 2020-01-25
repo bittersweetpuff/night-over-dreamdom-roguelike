@@ -126,7 +126,7 @@ pub fn draw_map(map: &[TileType], ctx: &mut Rltk) {
             TileType::Wall => ctx.set(
                 x,
                 y,
-                RGB::from_f32(0.5, 0.5, 0.5),
+                RGB::from_f32(0.3, 0.3, 0.3),
                 RGB::from_f32(0., 0., 0.),
                 rltk::to_cp437('#'),
             ),

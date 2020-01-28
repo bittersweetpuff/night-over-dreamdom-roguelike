@@ -1,6 +1,6 @@
 extern crate rltk;
 use super::Rect;
-use rltk::{Console, RandomNumberGenerator, Rltk, RGB};
+use rltk::{Algorithm2D, BaseMap, Console, Point, RandomNumberGenerator, Rltk, RGB};
 use std::cmp::{max, min};
 extern crate specs;
 use specs::prelude::*;
@@ -11,11 +11,14 @@ pub enum TileType {
     Floor,
 }
 
+#[derive(Default)]
 pub struct Map {
     pub tiles: Vec<TileType>,
     pub rooms: Vec<Rect>,
     pub width: i32,
     pub height: i32,
+    pub revealed_tiles: Vec<bool>,
+    pub visible_tiles: Vec<bool>,
 }
 
 impl Map {
@@ -58,6 +61,8 @@ impl Map {
             rooms: Vec::new(),
             width: 80,
             height: 50,
+            revealed_tiles: vec![false; 80 * 50],
+            visible_tiles: vec![false; 80 * 50],
         };
 
         const MAX_ROOMS: i32 = 30;
@@ -66,7 +71,7 @@ impl Map {
 
         let mut rng = RandomNumberGenerator::new();
 
-        for i in 0..MAX_ROOMS {
+        for _i in 0..MAX_ROOMS {
             let w = rng.range(MIN_SIZE, MAX_SIZE);
             let h = rng.range(MIN_SIZE, MAX_SIZE);
             let x = rng.roll_dice(1, map.width - w - 1) - 1;
@@ -101,28 +106,46 @@ impl Map {
     }
 }
 
+impl BaseMap for Map {
+    fn is_opaque(&self, idx: usize) -> bool {
+        self.tiles[idx] == TileType::Wall
+    }
+}
+
+impl Algorithm2D for Map {
+    fn dimensions(&self) -> Point {
+        Point::new(self.width, self.height)
+    }
+}
+
 pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
+    let map = ecs.fetch::<Map>();
+
     let mut y = 0;
     let mut x = 0;
-    let map = ecs.fetch::<Map>();
-    for tile in map.tiles.iter() {
-        match tile {
-            TileType::Floor => ctx.set(
-                x,
-                y,
-                RGB::from_f32(0.5, 0.5, 0.5),
-                RGB::from_f32(0., 0., 0.),
-                rltk::to_cp437('.'),
-            ),
-            TileType::Wall => ctx.set(
-                x,
-                y,
-                RGB::from_f32(0.3, 0.3, 0.3),
-                RGB::from_f32(0., 0., 0.),
-                rltk::to_cp437('#'),
-            ),
+    for (idx, tile) in map.tiles.iter().enumerate() {
+        // Render a tile depending upon the tile type
+
+        if map.revealed_tiles[idx] {
+            let glyph;
+            let mut fg;
+            match tile {
+                TileType::Floor => {
+                    glyph = rltk::to_cp437('.');
+                    fg = RGB::from_f32(0.8, 0.8, 0.8);
+                }
+                TileType::Wall => {
+                    glyph = rltk::to_cp437('#');
+                    fg = RGB::from_f32(1.0, 1.0, 0.65);
+                }
+            }
+            if !map.visible_tiles[idx] {
+                fg = RGB::from_f32(0.33, 0.33, 0.33)
+            }
+            ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
         }
 
+        // Move the coordinates
         x += 1;
         if x > 79 {
             x = 0;

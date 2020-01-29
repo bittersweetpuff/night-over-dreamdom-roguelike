@@ -1,7 +1,7 @@
 extern crate rltk;
 use rltk::{Rltk, VirtualKeyCode};
 extern crate specs;
-use super::{Map, Player, Position, State, TileType, Viewshed};
+use super::{Map, Player, Position, State, TileType, Viewshed, RunState, Point};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
@@ -18,20 +18,24 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
             pos.y = min(49, max(0, pos.y + delta_y));
 
             viewshed.dirty = true;
+            let mut ppos = ecs.write_resource::<Point>();
+            ppos.x = pos.x;
+            ppos.y = pos.y;
         }
     }
 }
 
-pub fn player_input(gs: &mut State, ctx: &mut Rltk) {
+pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     // Player movement
     match ctx.key {
-        None => {} // Nothing happened
+        None => { return RunState::Paused } // Nothing happened
         Some(key) => match key {
             VirtualKeyCode::Left => try_move_player(-1, 0, &mut gs.ecs),
             VirtualKeyCode::Right => try_move_player(1, 0, &mut gs.ecs),
             VirtualKeyCode::Up => try_move_player(0, -1, &mut gs.ecs),
             VirtualKeyCode::Down => try_move_player(0, 1, &mut gs.ecs),
-            _ => {}
+            _ => { return RunState::Paused }
         },
     }
+    RunState::Running
 }

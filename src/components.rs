@@ -25,11 +25,12 @@ pub struct Viewshed {
 }
 
 #[derive(Component, Debug)]
-pub struct Monster {
-
-}
+pub struct Monster {}
 
 #[derive(Component, Debug)]
 pub struct Name {
-    pub name : String
+    pub name: String,
 }
+
+#[derive(Component, Debug)]
+pub struct BlocksTile {}

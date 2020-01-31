@@ -1,7 +1,7 @@
 extern crate rltk;
 use rltk::{Rltk, VirtualKeyCode};
 extern crate specs;
-use super::{Map, Player, Position, State, TileType, Viewshed, RunState, Point};
+use super::{Map, Player, Point, Position, RunState, State, Viewshed};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
@@ -13,7 +13,7 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
 
     for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewsheds).join() {
         let destination_idx = map.xy_idx(pos.x + delta_x, pos.y + delta_y);
-        if map.tiles[destination_idx] != TileType::Wall {
+        if !map.blocked[destination_idx] {
             pos.x = min(79, max(0, pos.x + delta_x));
             pos.y = min(49, max(0, pos.y + delta_y));
 
@@ -28,13 +28,13 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
 pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     // Player movement
     match ctx.key {
-        None => { return RunState::Paused } // Nothing happened
+        None => return RunState::Paused, // Nothing happened
         Some(key) => match key {
             VirtualKeyCode::Left => try_move_player(-1, 0, &mut gs.ecs),
             VirtualKeyCode::Right => try_move_player(1, 0, &mut gs.ecs),
             VirtualKeyCode::Up => try_move_player(0, -1, &mut gs.ecs),
             VirtualKeyCode::Down => try_move_player(0, 1, &mut gs.ecs),
-            _ => { return RunState::Paused }
+            _ => return RunState::Paused,
         },
     }
     RunState::Running

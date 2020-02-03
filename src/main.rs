@@ -16,6 +16,10 @@ mod monster_ai_system;
 pub use monster_ai_system::*;
 mod map_indexing_system;
 pub use map_indexing_system::*;
+mod damage_system;
+pub use damage_system::*;
+mod melee_combat_system;
+pub use melee_combat_system::*;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
@@ -38,6 +42,8 @@ impl GameState for State {
         } else {
             self.runstate = player_input(self, ctx);
         }
+
+        damage_system::delete_the_dead(&mut self.ecs);
 
         draw_map(&self.ecs, ctx);
 
@@ -62,6 +68,10 @@ impl State {
         mob.run_now(&self.ecs);
         let mut mapindex = MapIndexingSystem {};
         mapindex.run_now(&self.ecs);
+        let mut melee = MeleeCombatSystem {};
+        melee.run_now(&self.ecs);
+        let mut damage = DamageSystem {};
+        damage.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -80,6 +90,8 @@ fn main() {
     gs.ecs.register::<Name>();
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
+    gs.ecs.register::<WantsToMelee>();
+    gs.ecs.register::<SufferDamage>();
 
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
@@ -128,9 +140,9 @@ fn main() {
             })
             .build();
     }
-    gs.ecs.insert(map);
 
-    gs.ecs
+    let player_entity = gs
+        .ecs
         .create_entity()
         .with(Position {
             x: player_x,
@@ -158,7 +170,9 @@ fn main() {
         })
         .build();
 
+    gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
+    gs.ecs.insert(player_entity);
 
     rltk::main_loop(context, gs);
 }

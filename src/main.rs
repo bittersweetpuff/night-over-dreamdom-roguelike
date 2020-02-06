@@ -20,6 +20,8 @@ mod damage_system;
 pub use damage_system::*;
 mod melee_combat_system;
 pub use melee_combat_system::*;
+mod gui;
+pub use gui::*;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
@@ -67,6 +69,7 @@ impl GameState for State {
         damage_system::delete_the_dead(&mut self.ecs);
 
         draw_map(&self.ecs, ctx);
+        gui::draw_ui(&self.ecs, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();

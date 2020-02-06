@@ -1,7 +1,7 @@
 extern crate rltk;
 use rltk::{Console, Rltk, RGB};
 extern crate specs;
-use super::{CombatStats, Player};
+use super::{CombatStats, Name, Player};
 use specs::prelude::*;
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
@@ -16,7 +16,16 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
 
     let combat_stats = ecs.read_storage::<CombatStats>();
     let players = ecs.read_storage::<Player>();
-    for (_player, stats) in (&players, &combat_stats).join() {
+    let names = ecs.read_storage::<Name>();
+    for (_player, stats, name) in (&players, &combat_stats, &names).join() {
+        let player_name = format!(" {} ", name.name);
+        ctx.print_color(
+            5,
+            43,
+            RGB::named(rltk::WHITE),
+            RGB::named(rltk::BLACK),
+            &player_name,
+        );
         let health = format!(" HP: {} / {} ", stats.hp, stats.max_hp);
         ctx.print_color(
             31,

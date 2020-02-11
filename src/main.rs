@@ -22,6 +22,8 @@ mod melee_combat_system;
 pub use melee_combat_system::*;
 mod gui;
 pub use gui::*;
+mod gamelog;
+pub use gamelog::*;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
@@ -193,6 +195,9 @@ fn main() {
 
     gs.ecs.insert(RunState::PreRun);
     gs.ecs.insert(map);
+    gs.ecs.insert(gamelog::GameLog {
+        entries: vec!["The night has come to the Dreamdom".to_string()],
+    });
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(player_entity);
 
